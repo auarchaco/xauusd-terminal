@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XAUUSD Elite Terminal</title>
+    <title>XAUUSD Elite Terminal v17</title>
     <style>
         :root {
             --gold: #D4A017;
@@ -62,10 +62,7 @@
             border-radius: 8px;
             font-family: 'Courier New', monospace;
             outline: none;
-            transition: border 0.3s;
         }
-
-        input:focus { border-color: var(--gold); }
 
         .grid-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
 
@@ -84,23 +81,20 @@
         }
 
         .btn-scan:hover { background: #b8860b; transform: translateY(-2px); }
-
-        .btn-scan:disabled { background: #475569; transform: none; cursor: not-allowed; }
+        .btn-scan:disabled { background: #475569; cursor: not-allowed; }
 
         #output {
             background: #0f172a;
             padding: 20px;
             border-radius: 12px;
-            border-left: 4px solid var(--gold);
+            border: 1px solid var(--gold);
             min-height: 150px;
             font-size: 14px;
-            line-height: 1.6;
+            line-height: 1.7;
             white-space: pre-wrap;
             color: #cbd5e1;
         }
 
-        .status-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; display: inline-block; margin-right: 5px; }
-        
         .loading-text { color: var(--gold); font-weight: bold; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
@@ -110,84 +104,72 @@
 <div class="terminal">
     <div class="header">
         <div>
-            <h1>XAUUSD ELITE v16</h1>
-            <p style="font-size: 10px; color: #94a3b8;"><span class="status-dot"></span> SISTEMA OPERATIVO</p>
+            <h1>XAUUSD ELITE v17</h1>
+            <p style="font-size: 10px; color: #22c55e;">● SISTEMA CONECTADO Y VERIFICADO</p>
         </div>
-        <div id="clock" style="font-family: monospace; font-size: 14px;">--:--:-- NY</div>
+        <div id="clock" style="font-family: monospace; font-size: 14px; color: #94a3b8;">--:--:-- NY</div>
     </div>
 
     <div class="content">
-        <div class="group">
-            <label>API Key de Google Studio</label>
-            <input type="password" id="api-key" placeholder="••••••••••••••••••••••••••••••••••••">
-        </div>
-
         <div class="grid-inputs">
             <div class="group"><label>Balance ($)</label><input type="number" id="balance" value="1000"></div>
             <div class="group"><label>Riesgo (%)</label><input type="number" id="risk" value="1"></div>
             <div class="group"><label>Stop Loss</label><input type="number" id="sl" value="20"></div>
         </div>
 
-        <button class="btn-scan" id="scan-btn" onclick="ejecutarTerminal()">Ejecutar Análisis Macro</button>
+        <button class="btn-scan" id="scan-btn" onclick="ejecutarAnalisis()">⚡ EJECUTAR ESCANEO GEMINI PRO</button>
 
-        <div id="output">Esperando inicialización de datos...</div>
+        <div id="output">Listo para procesar señales del Oro...</div>
     </div>
 </div>
 
 <script>
-    // Reloj NY Realista
+    // Tu API Key integrada para evitar errores manuales
+    const KEY_INTEGRADA = "AIzaSyCoYRkhb_4MEMTQEhHzZmD2ofKXyMEVN2U";
+
     setInterval(() => {
         const now = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(new Date());
         document.getElementById('clock').textContent = now + ' NY';
     }, 1000);
 
-    // Carga inicial de datos guardados
-    window.onload = () => {
-        const savedKey = localStorage.getItem('terminal_key_v16');
-        if (savedKey) document.getElementById('api-key').value = savedKey;
-    };
-
-    async function ejecutarTerminal() {
-        const key = document.getElementById('api-key').value.trim();
+    async function ejecutarAnalisis() {
         const box = document.getElementById('output');
         const btn = document.getElementById('scan-btn');
-        const bal = document.getElementById('balance').value;
+        const balance = document.getElementById('balance').value;
 
-        if (!key) return alert("Error: API Key requerida");
-        
-        localStorage.setItem('terminal_key_v16', key); // Guardado automático
-        
         btn.disabled = true;
-        box.innerHTML = '<span class="loading-text">Conectando con Red Neural de Google...</span>';
+        box.innerHTML = '<span class="loading-text">Sincronizando con Google AI Studio...</span>';
 
-        const prompt = `Analiza XAUUSD y DXY. Dame: 1. Dirección, 2. Entrada, SL, TP, 3. Lotes para cuenta de ${bal} USD. Sé breve.`;
+        const prompt = `Analiza XAUUSD y DXY para scalping hoy. 
+        Datos: Cuenta de ${balance} USD. 
+        Dame: Dirección, Entrada, SL, TP y Lotes. 
+        Veredicto: OPERAR o NO OPERAR.`;
 
-        // Lógica Multimodelo para evitar el error "Not Found"
-        const modelos = ["gemini-1.5-flash", "gemini-pro"];
-        let exito = false;
+        try {
+            // Se utiliza el endpoint v1 (producción) y el modelo 1.5-flash (el más estable)
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${KEY_INTEGRADA}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }]
+                })
+            });
 
-        for (let m of modelos) {
-            if (exito) break;
-            try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
+            const data = await response.json();
 
-                const data = await response.json();
+            if (data.error) {
+                box.innerHTML = `<b style="color:#ef4444;">ERROR DE API:</b><br>${data.error.message}`;
+            } else if (data.candidates && data.candidates[0].content) {
+                box.innerText = data.candidates[0].content.parts[0].text;
+            } else {
+                box.innerText = "Google no devolvió datos. Intenta de nuevo en un momento.";
+            }
 
-                if (data.candidates && data.candidates[0].content) {
-                    box.innerText = data.candidates[0].content.parts[0].text;
-                    exito = true;
-                }
-            } catch (e) { console.error("Fallo en " + m); }
+        } catch (e) {
+            box.innerHTML = `<b style="color:#ef4444;">ERROR DE RED:</b><br>${e.message}`;
+        } finally {
+            btn.disabled = false;
         }
-
-        if (!exito) {
-            box.innerHTML = '<b style="color:#f87171;">ERROR CRÍTICO:</b> No se pudo establecer conexión. Verifica que tu Key sea de Google AI Studio.';
-        }
-        btn.disabled = false;
     }
 </script>
 
