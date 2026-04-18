@@ -3,124 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XAUUSD Terminal · Gemini 2.0 PRO</title>
+    <title>XAUUSD Terminal · V13.0</title>
     <style>
-        :root { --gold: #D4A017; --dark: #0D0D1A; --blue: #3b82f6; }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #020617; color: #f8fafc; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .app { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 15px; }
+        :root { --gold: #D4A017; --dark: #0f172a; }
+        body { font-family: sans-serif; background: #020617; color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .app { width: 100%; max-width: 700px; display: flex; flex-direction: column; gap: 15px; }
         .card { background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); padding-bottom: 15px; margin-bottom: 5px; }
-        .input-field { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #475569; color: white; border-radius: 8px; font-family: monospace; }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
-        .label { font-size: 11px; color: #94a3b8; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; display: block; }
-        .btn-trade { width: 100%; padding: 18px; background: var(--gold); color: black; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; font-size: 16px; transition: 0.2s; margin-top: 10px; }
-        .btn-trade:hover { background: #b8860b; transform: translateY(-2px); }
-        .btn-trade:disabled { background: #475569; cursor: not-allowed; }
-        #response-body { background: #0f172a; border-radius: 12px; padding: 20px; border: 1px solid var(--gold); line-height: 1.7; white-space: pre-wrap; font-size: 14px; min-height: 150px; }
-        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid white; border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; margin-right: 10px; }
+        input { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #475569; color: white; border-radius: 8px; margin-top: 5px; }
+        .btn { width: 100%; padding: 18px; background: var(--gold); color: black; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        #response { background: #0f172a; border-radius: 12px; padding: 20px; border: 1px solid var(--gold); min-height: 100px; white-space: pre-wrap; margin-top: 10px; line-height: 1.5; }
+        .spinner { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid var(--gold); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
 <div class="app">
-    <div class="card header">
-        <div>
-            <h2 style="color: var(--gold)">⚡ XAUUSD GEMINI PRO</h2>
-            <p style="font-size: 12px;">v12.0 - High Frequency Analysis</p>
-        </div>
-        <div id="clock" style="font-family: monospace; font-size: 18px;">--:--:--</div>
+    <div class="card">
+        <h2 style="color: var(--gold); margin-bottom: 10px;">⚡ XAUUSD ANALYZER V13</h2>
+        <label style="font-size: 12px;">API KEY DE GOOGLE AI STUDIO:</label>
+        <input type="password" id="api-key" placeholder="AIzaSy...">
+        <button onclick="save()" style="margin-top: 10px; padding: 5px; cursor: pointer;">Guardar Clave</button>
     </div>
 
     <div class="card">
-        <span class="label">Configuración del Terminal</span>
-        <div style="display: flex; gap: 10px;">
-            <input type="password" id="api-key" class="input-field" placeholder="Pega tu Google API Key">
-            <button onclick="saveKey()" style="padding: 0 20px; border-radius: 8px; cursor: pointer; background: #334155; color: white; border: none;">Guardar</button>
-        </div>
+        <label style="font-size: 12px;">BALANCE DE CUENTA ($):</label>
+        <input type="number" id="balance" value="1000">
+        <button class="btn" id="btn" onclick="analizar()" style="margin-top: 20px;">⚡ ANALIZAR ORO</button>
     </div>
 
-    <div class="card">
-        <div class="grid">
-            <div><span class="label">Balance ($)</span><input type="number" id="balance" value="1000" class="input-field"></div>
-            <div><span class="label">Riesgo (%)</span><input type="number" id="risk" value="1" class="input-field"></div>
-            <div><span class="label">SL (Pips)</span><input type="number" id="sl" value="20" class="input-field"></div>
-        </div>
-    </div>
-
-    <button class="btn-trade" id="scan-btn" onclick="runScan()">⚡ EJECUTAR ESCANEO MACRO</button>
-
-    <div id="response-body">Esperando órdenes...</div>
+    <div id="response">Esperando acción...</div>
 </div>
 
 <script>
-    function updateClock() {
-        const now = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(new Date());
-        document.getElementById('clock').textContent = now;
-    }
-    setInterval(updateClock, 1000);
-
-    function saveKey() {
-        const key = document.getElementById('api-key').value.trim();
-        localStorage.setItem('gemini_api_key_v12', key);
-        alert("¡Clave guardada con éxito!");
+    function save() {
+        const k = document.getElementById('api-key').value;
+        localStorage.setItem('gem_key_v13', k);
+        alert("Clave guardada");
     }
 
     window.onload = () => {
-        const saved = localStorage.getItem('gemini_api_key_v12');
+        const saved = localStorage.getItem('gem_key_v13');
         if (saved) document.getElementById('api-key').value = saved;
-    };
+    }
 
-    async function runScan() {
-        const key = localStorage.getItem('gemini_api_key_v12');
-        const btn = document.getElementById('scan-btn');
-        const box = document.getElementById('response-body');
+    async function analizar() {
+        const key = localStorage.getItem('gem_key_v13');
+        const box = document.getElementById('response');
+        const btn = document.getElementById('btn');
 
-        if (!key) return alert("Por favor, guarda tu API Key.");
+        if (!key) return alert("Falta la clave");
 
         btn.disabled = true;
-        box.innerHTML = '<div class="spinner"></div> <b>Gemini 2.0 analizando flujos de mercado...</b>';
+        box.innerHTML = '<div class="spinner"></div> Analizando mercado...';
 
-        const prompt = "Actúa como trader experto. Analiza XAUUSD y DXY. Dame: 1. Sesgo, 2. Entrada, SL y TP, 3. Lotaje para cuenta de " + document.getElementById('balance').value + " USD con riesgo " + document.getElementById('risk').value + "%. Veredicto: OPERAR/NO OPERAR.";
+        const prompt = "Eres un trader pro de XAUUSD. Analiza el Oro y DXY. Dame: Sesgo, Entrada, SL, TP y Veredicto (Operar/No operar). Sé breve.";
 
-        // Probamos con la ruta de producción más estable para Gemini 2.0 Flash
         try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${key}`, {
+            // Usamos la URL v1 (estable) y el modelo 1.5-flash (disponibilidad total)
+            const resp = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }]
-                })
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
 
-            const data = await response.json();
+            const data = await resp.json();
 
+            // Verificación paso a paso para evitar error "undefined"
             if (data.error) {
-                // Si el modelo 2.0 falla por región, intentamos automáticamente con 1.5
-                throw new Error(data.error.message);
-            }
-
-            if (data.candidates && data.candidates[0].content) {
+                box.innerHTML = `<b style="color:red;">Error de Google:</b><br>${data.error.message}`;
+            } else if (data.candidates && data.candidates[0] && data.candidates[0].content) {
                 box.innerText = data.candidates[0].content.parts[0].text;
             } else {
-                box.innerText = "Error: Respuesta vacía de Google. Revisa tu saldo o cuota.";
+                box.innerHTML = `<b style="color:orange;">Respuesta inesperada:</b><br>La API no devolvió texto. Revisa si tu clave tiene restricciones de región.`;
             }
 
         } catch (e) {
-            // BACKUP: Si falla el 2.0, intentamos con el 1.5 directamente
-            box.innerHTML = `<div style="color:#fbbf24; font-size:12px; margin-bottom:10px;">⚠️ Reintentando con Gemini 1.5 (Fallo en 2.0: ${e.message})</div>`;
-            try {
-                const responseBackup = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
-                const dataBackup = await responseBackup.json();
-                box.innerText = dataBackup.candidates[0].content.parts[0].text;
-            } catch (e2) {
-                box.innerHTML = `<b style="color:#ef4444;">❌ ERROR FATAL:</b><br>${e2.message}`;
-            }
+            box.innerHTML = `<b style="color:red;">Error de Conexión:</b><br>${e.message}`;
         } finally {
             btn.disabled = false;
         }
