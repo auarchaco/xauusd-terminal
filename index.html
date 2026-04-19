@@ -5,25 +5,102 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>XAUUSD Elite Terminal v21</title>
     <style>
-        :root { --gold: #D4A017; --bg: #020617; --card: #1e293b; --text: #f8fafc; --border: #334155; --accent: #22c55e; }
+        :root {
+            --gold: #D4A017;
+            --bg: #020617;
+            --card: #1e293b;
+            --text: #f8fafc;
+            --border: #334155;
+            --accent: #22c55e;
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .terminal { width: 100%; max-width: 650px; background: var(--card); border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); overflow: hidden; }
-        .header { background: #0f172a; padding: 25px; border-bottom: 2px solid var(--gold); display: flex; justify-content: space-between; align-items: center; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .terminal {
+            width: 100%;
+            max-width: 650px;
+            background: var(--card);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #0f172a;
+            padding: 25px;
+            border-bottom: 2px solid var(--gold);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
         .header h1 { font-size: 1.3rem; color: var(--gold); letter-spacing: 3px; font-weight: 800; }
-        .status-badge { font-size: 10px; background: rgba(34, 197, 94, 0.1); color: var(--accent); padding: 4px 12px; border-radius: 20px; border: 1px solid var(--accent); display: flex; align-items: center; gap: 6px; text-transform: uppercase; font-weight: bold; }
-        .pulse { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse-animation 1.5s infinite; }
-        @keyframes pulse-animation { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
+
         .content { padding: 30px; display: flex; flex-direction: column; gap: 20px; }
+
         .grid-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+
+        .input-group { display: flex; flex-direction: column; gap: 8px; }
+
         label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
-        input { width: 100%; padding: 14px; background: #0f172a; border: 1px solid var(--border); color: white; border-radius: 10px; font-family: 'Courier New', monospace; font-size: 15px; }
-        .btn-scan { width: 100%; padding: 20px; background: var(--gold); color: #000; border: none; border-radius: 12px; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; transition: 0.3s; margin-top: 10px; }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            background: #0f172a;
+            border: 1px solid var(--border);
+            color: white;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 15px;
+            outline: none;
+        }
+
+        input:focus { border-color: var(--gold); }
+
+        .btn-scan {
+            width: 100%;
+            padding: 20px;
+            background: var(--gold);
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            font-weight: 900;
+            font-size: 16px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+
         .btn-scan:hover { background: #eab308; transform: translateY(-2px); }
         .btn-scan:disabled { background: #475569; cursor: not-allowed; }
-        #output { background: #0f172a; padding: 20px; border-radius: 12px; border-left: 4px solid var(--gold); min-height: 180px; font-size: 14px; line-height: 1.8; color: #cbd5e1; white-space: pre-wrap; border: 1px solid var(--border); }
-        .loader { color: var(--gold); font-weight: bold; text-align: center; display: block; animation: pulse-text 1.5s infinite; }
-        @keyframes pulse-text { 50% { opacity: 0.5; } }
+
+        #output {
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid var(--gold);
+            min-height: 180px;
+            font-size: 14px;
+            line-height: 1.8;
+            color: #cbd5e1;
+            white-space: pre-wrap;
+            border: 1px solid var(--border);
+        }
+
+        .loading { color: var(--gold); font-weight: bold; text-align: center; display: block; }
     </style>
 </head>
 <body>
@@ -32,25 +109,28 @@
     <div class="header">
         <div>
             <h1>GOLD ELITE v21</h1>
-            <div style="font-family: monospace; font-size: 12px; color: #94a3b8; margin-top: 5px;" id="clock">00:00:00 NY</div>
+            <div id="clock" style="font-family: monospace; font-size: 12px; color: #94a3b8; margin-top: 5px;">00:00:00 NY TIME</div>
         </div>
-        <div class="status-badge"><div class="pulse"></div> SISTEMA AUTO-ADAPTATIVO</div>
+        <div style="color: var(--accent); font-size: 10px; font-weight: bold; border: 1px solid var(--accent); padding: 4px 10px; border-radius: 20px;">SISTEMA ESTABLE</div>
     </div>
 
     <div class="content">
         <div class="grid-inputs">
-            <div><label>Balance ($)</label><input type="number" id="balance" value="1000"></div>
-            <div><label>Riesgo (%)</label><input type="number" id="risk" value="1"></div>
-            <div><label>SL Pips</label><input type="number" id="sl" value="20"></div>
+            <div class="input-group"><label>Balance ($)</label><input type="number" id="balance" value="1000"></div>
+            <div class="input-group"><label>Riesgo (%)</label><input type="number" id="risk" value="1"></div>
+            <div class="input-group"><label>Stop Loss</label><input type="number" id="sl" value="20"></div>
         </div>
-        <button class="btn-scan" id="scan-btn" onclick="ejecutarAnalisis()">⚡ EJECUTAR ESCANEO INTELIGENTE</button>
-        <div id="output">Listo para procesar. Clave detectada e integrada.</div>
+
+        <button class="btn-scan" id="scan-btn" onclick="ejecutarAnalisis()">Ejecutar Escaneo Macro</button>
+
+        <div id="output">Terminal lista. Esperando órdenes del operador...</div>
     </div>
 </div>
 
 <script>
     const API_KEY = "AIzaSyCoYRkhb_4MEMTQEhHzZmD2ofKXyMEVN2U";
 
+    // Reloj New York
     setInterval(() => {
         const ny = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(new Date());
         document.getElementById('clock').textContent = ny + ' NY TIME';
@@ -59,46 +139,39 @@
     async function ejecutarAnalisis() {
         const box = document.getElementById('output');
         const btn = document.getElementById('scan-btn');
-        const bal = document.getElementById('balance').value;
+        const balance = document.getElementById('balance').value;
 
         btn.disabled = true;
-        box.innerHTML = '<div class="loader">Detectando modelos disponibles en tu cuenta...</div>';
+        box.innerHTML = '<div class="loading">Sincronizando protocolos...</div>';
 
         try {
-            // PASO 1: Listar modelos para saber EXACTAMENTE cuál usar
-            const listResp = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${API_KEY}`);
-            const listData = await listResp.json();
+            // Paso 1: Obtener modelos disponibles (Metodología v21)
+            const listResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${API_KEY}`);
+            const listData = await listResponse.json();
             
-            let modelName = "";
-            if (listData.models && listData.models.length > 0) {
-                // Buscamos preferiblemente gemini-1.5-flash o gemini-pro
-                const found = listData.models.find(m => m.name.includes('gemini-1.5-flash') || m.name.includes('gemini-pro'));
-                modelName = found ? found.name : listData.models[0].name;
-            } else {
-                throw new Error("No se encontraron modelos vinculados a esta API Key.");
-            }
+            const model = listData.models.find(m => m.name.includes('gemini-1.5-flash')) || listData.models[0];
 
-            box.innerHTML = `<div class="loader">Modelo detectado: ${modelName.split('/').pop()}. Generando análisis...</div>`;
+            // Paso 2: Enviar prompt de análisis
+            const prompt = `Actúa como un trader experto institucional de XAUUSD. Analiza el Oro y el DXY. Proporciona: Dirección, Punto de Entrada, SL, TP y el Lotaje recomendado para una cuenta de $${balance}. Veredicto final: OPERAR o NO OPERAR.`;
 
-            // PASO 2: Realizar el análisis con el nombre de modelo REAL
-            const prompt = `Analista experto XAUUSD. Dame: Dirección, Entrada, SL, TP y Lotes para cuenta de $${bal}. Veredicto: OPERAR/NO OPERAR.`;
-
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1/${modelName}:generateContent?key=${API_KEY}`, {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${model.name}:generateContent?key=${API_KEY}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }]
+                })
             });
 
             const data = await response.json();
-
+            
             if (data.candidates && data.candidates[0].content) {
                 box.innerText = data.candidates[0].content.parts[0].text;
             } else {
-                box.innerText = "Google recibió la orden pero no generó respuesta. Intenta de nuevo.";
+                box.innerText = "Error en la respuesta de la IA. Intenta nuevamente.";
             }
 
-        } catch (e) {
-            box.innerHTML = `<b style="color:#ef4444;">ERROR DE SISTEMA:</b><br>${e.message}<br><br><small>Verifica que tu clave en Google AI Studio tenga habilitada la "Generative Language API".</small>`;
+        } catch (error) {
+            box.innerHTML = `<b style="color:#ef4444;">ERROR DE CONEXIÓN:</b><br>Asegúrate de tener internet y que la API Key sea válida.`;
         } finally {
             btn.disabled = false;
         }
