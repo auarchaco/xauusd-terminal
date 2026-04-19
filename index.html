@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XAUUSD Elite Terminal v21 FINAL</title>
+    <title>XAUUSD Elite Terminal v21.5 - Tables</title>
     <style>
         :root { --gold: #D4A017; --bg: #020617; --card: #1e293b; --text: #f8fafc; --border: #334155; --accent: #22c55e; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -16,8 +16,13 @@
         label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; }
         input { width: 100%; padding: 14px; background: #0f172a; border: 1px solid var(--border); color: white; border-radius: 10px; font-family: monospace; font-size: 15px; outline: none; }
         .btn-scan { width: 100%; padding: 20px; background: var(--gold); color: #000; border: none; border-radius: 12px; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; }
-        .btn-scan:disabled { background: #475569; cursor: not-allowed; }
-        #output { background: #0f172a; padding: 20px; border-radius: 12px; border-left: 4px solid var(--gold); min-height: 180px; font-size: 14px; line-height: 1.8; color: #cbd5e1; white-space: pre-wrap; border: 1px solid var(--border); }
+        
+        /* Estilos de las Tablas Solicitadas */
+        .trade-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; border: 1px solid var(--border); background: #0f172a; border-radius: 8px; overflow: hidden; }
+        .trade-table th { background: #1e293b; color: var(--gold); font-size: 10px; padding: 8px; text-transform: uppercase; }
+        .trade-table td { padding: 12px; text-align: center; border: 1px solid var(--border); font-family: monospace; font-size: 15px; }
+        
+        #output { background: #0f172a; padding: 20px; border-radius: 12px; border-left: 4px solid var(--gold); font-size: 13px; line-height: 1.6; color: #cbd5e1; white-space: pre-wrap; border: 1px solid var(--border); }
         .loading { color: var(--gold); font-weight: bold; text-align: center; display: block; }
     </style>
 </head>
@@ -26,10 +31,10 @@
 <div class="terminal">
     <div class="header">
         <div>
-            <h1>GOLD ELITE v21</h1>
+            <h1>GOLD ELITE v21.5</h1>
             <div id="clock" style="font-family: monospace; font-size: 12px; color: #94a3b8; margin-top: 5px;">00:00:00 NY TIME</div>
         </div>
-        <div style="color: var(--accent); font-size: 10px; font-weight: bold; border: 1px solid var(--accent); padding: 4px 10px; border-radius: 20px;">SISTEMA RESTAURADO</div>
+        <div style="color: var(--accent); font-size: 10px; font-weight: bold; border: 1px solid var(--accent); padding: 4px 10px; border-radius: 20px;">TABLAS ACTIVAS</div>
     </div>
 
     <div class="content">
@@ -39,7 +44,10 @@
             <div><label>SL Pips</label><input type="number" id="sl" value="20"></div>
         </div>
         <button class="btn-scan" id="scan-btn" onclick="ejecutarAnalisis()">Ejecutar Escaneo Macro</button>
-        <div id="output">Terminal v21-Core lista.</div>
+        
+        <div id="tables-area"></div>
+
+        <div id="output">Terminal v21.5 lista.</div>
     </div>
 </div>
 
@@ -53,22 +61,27 @@
 
     async function ejecutarAnalisis() {
         const box = document.getElementById('output');
+        const tablesArea = document.getElementById('tables-area');
         const btn = document.getElementById('scan-btn');
         btn.disabled = true;
+        tablesArea.innerHTML = '';
         box.innerHTML = '<div class="loading">Sincronizando con Google AI...</div>';
 
         try {
-            // PASO 1: Listar modelos (Igual que en la v21 original)
             const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${API_KEY}`;
             const listResp = await fetch(listUrl);
             const listData = await listResp.json();
-            
-            if (!listData.models) throw new Error("Key bloqueada o inválida");
-
             const model = listData.models.find(m => m.name.includes('gemini-1.5-flash')) || listData.models[0];
 
-            // PASO 2: Enviar prompt
-            const prompt = `Trader Experto XAUUSD. Analiza Oro y DXY. Dame: Dirección, Entrada, SL, TP y Lotes para cuenta de $${document.getElementById('balance').value}. Veredicto: OPERAR/NO OPERAR.`;
+            const prompt = `Analiza XAUUSD y DXY. 
+            IMPORTANTE: Empieza tu respuesta con estos datos exactos:
+            Entrada: [valor]
+            SL: [valor]
+            TP: [valor]
+            Direccion: [BUY/SELL]
+            Lotes: [valor]
+            Veredicto: [OPERAR/NO OPERAR]
+            Luego da una explicación breve. Datos cuenta: $${document.getElementById('balance').value}, Riesgo ${document.getElementById('risk').value}%, SL ${document.getElementById('sl').value} pips.`;
 
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${model.name}:generateContent?key=${API_KEY}`, {
                 method: 'POST',
@@ -77,15 +90,36 @@
             });
 
             const data = await response.json();
-            
             if (data.candidates && data.candidates[0].content) {
-                box.innerText = data.candidates[0].content.parts[0].text;
+                const texto = data.candidates[0].content.parts[0].text;
+                
+                // Extraer datos para las tablas (Regex)
+                const entrada = texto.match(/Entrada:\s*(.*)/i)?.[1] || "---";
+                const sl = texto.match(/SL:\s*(.*)/i)?.[1] || "---";
+                const tp = texto.match(/TP:\s*(.*)/i)?.[1] || "---";
+                const direccion = texto.match(/Direccion:\s*(.*)/i)?.[1] || "---";
+                const lotes = texto.match(/Lotes:\s*(.*)/i)?.[1] || "---";
+                const veredicto = texto.match(/Veredicto:\s*(.*)/i)?.[1] || "---";
+
+                // Inyectar Tablas
+                tablesArea.innerHTML = `
+                    <table class="trade-table">
+                        <tr><th>Entrada</th><th>SL</th><th>TP</th></tr>
+                        <tr><td>${entrada}</td><td>${sl}</td><td>${tp}</td></tr>
+                    </table>
+                    <table class="trade-table">
+                        <tr><th>Direccion</th><th>Lotes</th><th>Veredicto</th></tr>
+                        <tr><td style="color:var(--gold)">${direccion}</td><td>${lotes}</td><td>${veredicto}</td></tr>
+                    </table>
+                `;
+
+                box.innerText = texto;
             } else {
                 box.innerHTML = "Google no envió datos. Pulsa de nuevo.";
             }
 
         } catch (e) {
-            box.innerHTML = `<b style="color:#ef4444;">ERROR DE CONEXIÓN:</b><br>Google está rechazando la petición temporalmente. Espera 10 segundos y pulsa de nuevo.`;
+            box.innerHTML = `<b style="color:#ef4444;">ERROR:</b> Reintenta en 10 seg.`;
         } finally {
             btn.disabled = false;
         }
