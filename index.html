@@ -26,9 +26,9 @@
     <div class="header">
         <div>
             <h1>GOLD ELITE v21</h1>
-            <div id="clock" style="font-family: monospace; font-size: 11px; color: #94a3b8;">00:00:00 NY</div>
+            <div id="clock" style="font-family: monospace; font-size: 11px; color: #94a3b8;">--:--:-- NY</div>
         </div>
-        <div style="color: var(--accent); font-size: 10px; font-weight: bold; border: 1px solid var(--accent); padding: 4px 10px; border-radius: 20px;">V21 CORE</div>
+        <div style="color: var(--accent); font-size: 10px; font-weight: bold; border: 1px solid var(--accent); padding: 4px 10px; border-radius: 20px;">CORE STABLE</div>
     </div>
 
     <div class="content">
@@ -38,15 +38,17 @@
             <div><label>SL Pips</label><input type="number" id="sl" value="20"></div>
         </div>
         <button class="btn-scan" id="scan-btn" onclick="ejecutarAnalisis()">⚡ EJECUTAR ANALISIS</button>
-        <div id="output">Esperando...</div>
+        <div id="output">Terminal v21 lista.</div>
     </div>
 </div>
 
 <script>
     const API_KEY = "AIzaSyCoYRkhb_4MEMTQEhHzZmD2ofKXyMEVN2U";
 
+    // Reloj NY
     setInterval(() => {
-        document.getElementById('clock').textContent = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(new Date()) + ' NY';
+        const ny = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(new Date());
+        document.getElementById('clock').textContent = ny + ' NY';
     }, 1000);
 
     async function ejecutarAnalisis() {
@@ -56,12 +58,14 @@
         box.innerHTML = '<span style="color: var(--gold)">⏳ PROCESANDO...</span>';
 
         try {
-            // PASO 1: Listar modelos (Igual que en la v21 original)
+            // PASO 1: Listar modelos (La clave del éxito de la v21)
             const listResp = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${API_KEY}`);
             const listData = await listResp.json();
+            
+            // Si Google responde, buscamos el modelo flash
             const model = listData.models.find(m => m.name.includes('gemini-1.5-flash')) || listData.models[0];
 
-            // PASO 2: Generar contenido
+            // PASO 2: Enviar el análisis
             const prompt = `Trader XAUUSD. Balance $${document.getElementById('balance').value}. Dame: Dirección, Entrada, SL, TP, Lotes. OPERAR/NO OPERAR.`;
             
             const response = await fetch(`https://generativelanguage.googleapis.com/v1/${model.name}:generateContent?key=${API_KEY}`, {
@@ -71,10 +75,15 @@
             });
 
             const data = await response.json();
-            box.innerText = data.candidates[0].content.parts[0].text;
+            
+            if (data.candidates && data.candidates[0].content) {
+                box.innerText = data.candidates[0].content.parts[0].text;
+            } else {
+                box.innerHTML = `<b style="color:red;">ERROR:</b> Respuesta vacía de Google.`;
+            }
 
         } catch (e) {
-            box.innerHTML = `<b style="color:red;">ERROR DE CONEXIÓN</b><br>Intenta de nuevo.`;
+            box.innerHTML = `<b style="color:red;">ERROR DE CONEXIÓN</b><br>Por favor, intenta pulsar el botón de nuevo.`;
         } finally {
             btn.disabled = false;
         }
