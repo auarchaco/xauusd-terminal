@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XAUUSD Elite Terminal v26</title>
+    <title>XAUUSD Elite Terminal v21 Turbo</title>
     <style>
         :root { --gold: #D4A017; --bg: #020617; --card: #1e293b; --text: #f8fafc; --border: #334155; --accent: #22c55e; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -11,16 +11,19 @@
         .terminal { width: 100%; max-width: 650px; background: var(--card); border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); overflow: hidden; }
         .header { background: #0f172a; padding: 25px; border-bottom: 2px solid var(--gold); display: flex; justify-content: space-between; align-items: center; }
         .header h1 { font-size: 1.3rem; color: var(--gold); letter-spacing: 3px; font-weight: 800; }
-        .status-badge { font-size: 10px; color: var(--accent); padding: 4px 12px; border-radius: 20px; border: 1px solid var(--accent); font-weight: bold; text-transform: uppercase; }
+        .status-badge { font-size: 10px; color: var(--accent); padding: 4px 12px; border-radius: 20px; border: 1px solid var(--accent); font-weight: bold; display: flex; align-items: center; gap: 6px; }
+        .pulse { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse-animation 1.5s infinite; }
+        @keyframes pulse-animation { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
         .content { padding: 30px; display: flex; flex-direction: column; gap: 20px; }
         .grid-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
         label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; }
-        input { width: 100%; padding: 14px; background: #0f172a; border: 1px solid var(--border); color: white; border-radius: 10px; font-family: monospace; font-size: 15px; }
+        input { width: 100%; padding: 14px; background: #0f172a; border: 1px solid var(--border); color: white; border-radius: 10px; font-family: 'Courier New', monospace; font-size: 15px; }
         .btn-scan { width: 100%; padding: 20px; background: var(--gold); color: #000; border: none; border-radius: 12px; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
         .btn-scan:hover { background: #eab308; transform: translateY(-2px); }
-        #output { background: #0f172a; padding: 20px; border-radius: 12px; min-height: 180px; font-size: 14px; line-height: 1.8; color: #cbd5e1; white-space: pre-wrap; border: 1px solid var(--border); border-left: 4px solid var(--gold); }
-        .loading { color: var(--gold); font-weight: bold; text-align: center; display: block; animation: blink 1.5s infinite; }
-        @keyframes blink { 50% { opacity: 0.4; } }
+        .btn-scan:disabled { opacity: 0.6; cursor: not-allowed; }
+        #output { background: #0f172a; padding: 20px; border-radius: 12px; border-left: 4px solid var(--gold); min-height: 180px; font-size: 14px; line-height: 1.7; color: #cbd5e1; white-space: pre-wrap; border: 1px solid var(--border); }
+        .loader { color: var(--gold); font-weight: bold; text-align: center; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
     </style>
 </head>
 <body>
@@ -28,33 +31,43 @@
 <div class="terminal">
     <div class="header">
         <div>
-            <h1>GOLD ELITE v26</h1>
-            <div id="clock" style="font-family: monospace; font-size: 12px; color: #94a3b8; margin-top: 5px;">00:00:00 NY TIME</div>
+            <h1>GOLD ELITE v21</h1>
+            <div id="clock" style="font-family: monospace; font-size: 12px; color: #94a3b8; margin-top: 5px;">00:00:00 NY</div>
         </div>
-        <div class="status-badge">SISTEMA RESTAURADO</div>
+        <div class="status-badge"><div class="pulse"></div> TURBO MODE ACTIVE</div>
     </div>
 
     <div class="content">
         <div class="grid-inputs">
-            <div class="input-group"><label>Balance ($)</label><input type="number" id="balance" value="1000"></div>
-            <div class="input-group"><label>Riesgo (%)</label><input type="number" id="risk" value="1"></div>
-            <div class="input-group"><label>Stop Loss</label><input type="number" id="sl" value="20"></div>
+            <div><label>Balance ($)</label><input type="number" id="balance" value="1000"></div>
+            <div><label>Riesgo (%)</label><input type="number" id="risk" value="1"></div>
+            <div><label>SL Pips</label><input type="number" id="sl" value="20"></div>
         </div>
-
-        <button class="btn-scan" id="scan-btn" onclick="ejecutarAnalisis()">⚡ EJECUTAR ANÁLISIS ELITE</button>
-
-        <div id="output">Terminal lista. Esperando órdenes macro...</div>
+        <button class="btn-scan" id="scan-btn" onclick="ejecutarAnalisis()">⚡ EJECUTAR ESCANEO TURBO</button>
+        <div id="output">Listo para análisis de alta velocidad.</div>
     </div>
 </div>
 
 <script>
-    // CLAVE INTEGRADA Y RUTA DE PRODUCCIÓN V1
     const API_KEY = "AIzaSyCoYRkhb_4MEMTQEhHzZmD2ofKXyMEVN2U";
+    let activeModel = "models/gemini-1.5-flash"; // Predeterminado para velocidad
 
     setInterval(() => {
-        const ny = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(new Date());
-        document.getElementById('clock').textContent = ny + ' NY TIME';
+        document.getElementById('clock').textContent = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(new Date()) + ' NY';
     }, 1000);
+
+    // Detección silenciosa de modelo al cargar para no perder tiempo luego
+    async function preloadModel() {
+        try {
+            const resp = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${API_KEY}`);
+            const data = await resp.json();
+            if (data.models) {
+                const found = data.models.find(m => m.name.includes('gemini-1.5-flash'));
+                if (found) activeModel = found.name;
+            }
+        } catch (e) { console.log("Preload fail"); }
+    }
+    preloadModel();
 
     async function ejecutarAnalisis() {
         const box = document.getElementById('output');
@@ -62,32 +75,26 @@
         const bal = document.getElementById('balance').value;
 
         btn.disabled = true;
-        box.innerHTML = '<div class="loading">Sincronizando con Google AI (Producción V1)...</div>';
+        box.innerHTML = '<div class="loader">⚡ PROCESANDO SEÑALES...</div>';
 
-        const prompt = `Actúa como trader experto en XAUUSD. Analiza Oro y DXY. Dame: Dirección, Entrada, SL, TP y Lotes para cuenta de $${bal}. Veredicto: OPERAR/NO OPERAR.`;
+        // Prompt optimizado (menos tokens = respuesta más rápida)
+        const prompt = `Trader Oro. Balance $${bal}. Dame: Dirección, Entrada, SL, TP, Lotes. OPERAR/NO OPERAR.`;
 
-        // ELIMINAMOS 'v1beta' Y USAMOS LA RUTA DE PRODUCCIÓN ESTABLE 'v1'
         try {
-            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
-            
-            const response = await fetch(url, {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1/${activeModel}:generateContent?key=${API_KEY}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                body: JSON.stringify({ 
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { maxOutputTokens: 250, temperature: 0.5 } // Limita longitud para ganar velocidad
+                })
             });
 
             const data = await response.json();
+            box.innerText = data.candidates[0].content.parts[0].text;
 
-            if (data.candidates && data.candidates[0].content) {
-                box.innerText = data.candidates[0].content.parts[0].text;
-            } else if (data.error) {
-                // Si el error es de cuota o clave, lo mostramos claro
-                box.innerHTML = `<b style="color:#ef4444;">ERROR DE GOOGLE:</b><br>${data.error.message}`;
-            } else {
-                box.innerHTML = `<b style="color:#fbbf24;">SIN RESPUESTA:</b> Reintenta en 5 segundos.`;
-            }
         } catch (e) {
-            box.innerHTML = `<b style="color:#ef4444;">ERROR DE CONEXIÓN:</b> Revisa tu conexión a internet.`;
+            box.innerHTML = `<b style="color:#ef4444;">ERROR:</b> Reintenta ahora.`;
         } finally {
             btn.disabled = false;
         }
