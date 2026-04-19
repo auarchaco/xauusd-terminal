@@ -2,72 +2,90 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>XAUUSD Elite Terminal v21.1</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XAUUSD Elite Terminal v21.2</title>
     <style>
-        :root { --gold: #D4A017; --bg: #020617; --card: #1e293b; --text: #f8fafc; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .terminal { width: 100%; max-width: 550px; background: var(--card); border-radius: 15px; border: 1px solid #334155; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
-        .header { background: #0f172a; padding: 20px; border-bottom: 2px solid var(--gold); display: flex; justify-content: space-between; align-items: center; }
-        .content { padding: 25px; display: flex; flex-direction: column; gap: 15px; }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        label { font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: bold; }
-        input { width: 100%; padding: 10px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 5px; outline: none; }
-        .btn { width: 100%; padding: 15px; background: var(--gold); color: black; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
-        #output { background: #0f172a; padding: 15px; border-radius: 10px; min-height: 150px; font-size: 14px; line-height: 1.6; border-left: 4px solid var(--gold); white-space: pre-wrap; }
+        :root { --gold: #D4A017; --bg: #020617; --card: #1e293b; --text: #f8fafc; --border: #334155; --accent: #22c55e; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .terminal { width: 100%; max-width: 600px; background: var(--card); border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 25px 50px rgba(0,0,0,0.7); overflow: hidden; }
+        .header { background: #0f172a; padding: 25px; border-bottom: 2px solid var(--gold); display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 1.3rem; color: var(--gold); letter-spacing: 2px; font-weight: 800; }
+        .content { padding: 30px; display: flex; flex-direction: column; gap: 20px; }
+        .grid-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; }
+        input { width: 100%; padding: 14px; background: #0f172a; border: 1px solid var(--border); color: white; border-radius: 10px; font-family: monospace; font-size: 15px; outline: none; }
+        .btn-scan { width: 100%; padding: 20px; background: var(--gold); color: #000; border: none; border-radius: 12px; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+        .btn-scan:hover { background: #eab308; }
+        #output { background: #0f172a; padding: 20px; border-radius: 12px; min-height: 180px; font-size: 14px; line-height: 1.7; color: #cbd5e1; white-space: pre-wrap; border: 1px solid var(--border); border-left: 4px solid var(--gold); }
+        .ny-clock { font-family: monospace; font-size: 12px; color: #94a3b8; }
     </style>
 </head>
 <body>
 
 <div class="terminal">
     <div class="header">
-        <h2 style="color:var(--gold); margin:0; font-size:18px;">GOLD ELITE v21.1</h2>
-        <span id="clock" style="font-family:monospace; font-size:12px; color:#94a3b8;">--:-- NY</span>
+        <div>
+            <h1>GOLD ELITE v21.2</h1>
+            <div id="clock" class="ny-clock">00:00:00 NY</div>
+        </div>
+        <div style="color: var(--accent); font-size: 10px; font-weight: bold; border: 1px solid var(--accent); padding: 4px 10px; border-radius: 20px;">PROTOCOLO DIRECTO</div>
     </div>
+
     <div class="content">
-        <div class="grid">
-            <div><label>Balance</label><input type="number" id="balance" value="1000"></div>
-            <div><label>Riesgo %</label><input type="number" id="risk" value="1"></div>
+        <div class="grid-inputs">
+            <div><label>Balance ($)</label><input type="number" id="balance" value="1000"></div>
+            <div><label>Riesgo (%)</label><input type="number" id="risk" value="1"></div>
             <div><label>SL Pips</label><input type="number" id="sl" value="20"></div>
         </div>
-        <button class="btn" id="btn" onclick="analizar()">⚡ ESCANEAR AHORA</button>
-        <div id="output">Listo para operar.</div>
+        <button class="btn-scan" id="scan-btn" onclick="ejecutarAnalisis()">⚡ ESCANEAR AHORA</button>
+        <div id="output">Terminal v21 Core Restaurada.</div>
     </div>
 </div>
 
 <script>
     const API_KEY = "AIzaSyCoYRkhb_4MEMTQEhHzZmD2ofKXyMEVN2U";
 
-    // Reloj rápido
     setInterval(() => {
-        const ny = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date());
-        document.getElementById('clock').textContent = ny + ' NY';
+        document.getElementById('clock').textContent = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(new Date()) + ' NY';
     }, 1000);
 
-    async function analizar() {
-        const out = document.getElementById('output');
-        const btn = document.getElementById('btn');
+    async function ejecutarAnalisis() {
+        const box = document.getElementById('output');
+        const btn = document.getElementById('scan-btn');
         btn.disabled = true;
-        out.innerHTML = "<span style='color:var(--gold)'>⏳ CONECTANDO...</span>";
+        box.innerHTML = '<span style="color: var(--gold); font-weight: bold;">⚡ PROCESANDO...</span>';
+
+        // EL CAMBIO RADICAL: No preguntamos nada a Google. Vamos directo al modelo más estable.
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
         try {
-            // MÉTODO V21 PURO: Detección y envío en una sola cadena de promesas
-            const list = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${API_KEY}`);
-            const models = await list.json();
-            const model = models.models.find(m => m.name.includes('gemini-1.5-flash')).name;
-
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1/${model}:generateContent?key=${API_KEY}`, {
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: "Trader XAUUSD. Balance $" + document.getElementById('balance').value + ". Dame: Dirección, Entrada, SL, TP y Lotes. Breve." }] }]
+                body: JSON.stringify({ 
+                    contents: [{ parts: [{ text: `Trader Oro. Balance $${document.getElementById('balance').value}. Dame: Dirección, Entrada, SL, TP, Lotes. OPERAR/NO OPERAR.` }] }]
                 })
             });
 
-            const data = await res.json();
-            out.innerText = data.candidates[0].content.parts[0].text;
+            const data = await response.json();
+
+            if (data.candidates && data.candidates[0].content) {
+                box.innerText = data.candidates[0].content.parts[0].text;
+            } else {
+                // Si falla el beta, intentamos la ruta estable v1 sin parpadeos
+                const urlV1 = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+                const respV1 = await fetch(urlV1, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: "Analiza XAUUSD rápido." }] }] })
+                });
+                const dataV1 = await respV1.json();
+                box.innerText = dataV1.candidates[0].content.parts[0].text;
+            }
 
         } catch (e) {
-            out.innerHTML = "<b style='color:#ef4444;'>ERROR DE SEÑAL</b><br>Reintenta ahora mismo.";
+            box.innerHTML = `<b style="color:#ef4444;">ERROR DE CONEXIÓN</b><br>Pulsa de nuevo inmediatamente.`;
         } finally {
             btn.disabled = false;
         }
